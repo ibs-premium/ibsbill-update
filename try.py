@@ -6,15 +6,16 @@ import uuid
 import requests
 import base64
 import json
+from decouple import config
 
 
 # ---------- YOUR CONFIG HERE ----------
-SUBSCRIPTION_KEY = '673d7e5e5ef5459681c3928246eff925'        
-API_USER = 'bfae8bcd-4348-4c55-a249-437fed1afc0b'             
-API_KEY = 'f5a04ca6b90247a2bd170b9b1b4035f7'                  
-CALLBACK_URL = 'https://www.ibsbill.org'
-CURRENCY = 'GHS'                                               
-ENVIRONMENT = 'mtnghana'
+SUBSCRIPTION_KEY = config('MTN_SUBSCRIPTION_KEY')
+API_USER = config('MTN_API_USER')
+API_KEY = config('MTN_API_KEY')
+CALLBACK_URL = config('MTN_CALLBACK_URL')
+CURRENCY = config('MTN_CURRENCY')
+ENVIRONMENT = config('MTN_ENVIRONMENT')
 # --------------------------------------
 
 # STEP 1: Generate access token
