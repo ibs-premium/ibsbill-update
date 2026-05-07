@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+{% include 'users/head.html' %}
+<title>Expert Admin || Dashboard </title>
+<body>
+
+    <!-- PAGE LOADING
+    ================================================== -->
+    <div id="preloader"></div>
+
+    <!-- PAGE CONTAINER
+    ================================================== -->
+    <div class="page-container">
+
+        <!-- PAGE SIDEBAR
+        ================================================== -->
+        {% include 'users/aside.html' %}
+
+        <!-- PAGE CONTENT
+        ================================================== -->
+        <div class="page-content">
+
+            <!-- start page header -->
+            {% include 'users/header.html' %}
+            <!-- end page header -->
+
+            <!-- start page inner -->
+            <div class="page-inner">
+                <div class="page-title">
+                    <h3 class="breadcrumb-header">My Page</h3>
+                </div>
+                <!-- start page main wrapper -->
+                <div id="main-wrapper">
+                    <div class="row">
+                        <div class="col-12">
+                            {% if messages %}
+                            <div>
+                                {% for message in messages %}
+                                <div class="alert {{ message.tags }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+
+
+                            <div class="accordion-style" id="my_page_setup">
+                                <!-- Basic -->
+                                <div class="card">
+                                    <div class="card-header" id="headingOne">
+                                        <h2 class="mb-0">
+                                            <button 
+                                                class="btn btn-link" 
+                                                type="button" 
+                                                data-bs-toggle="collapse" 
+                                                data-bs-target="#basicCollapse" 
+                                                aria-expanded="true" 
+                                                aria-controls="basicCollapse">
+                                                Basic
+                                            </button>
+                                        </h2>
+                                    </div>
+                                    <div 
+                                        id="basicCollapse" 
+                                        class="collapse show" 
+                                        aria-labelledby="headingOne" 
+                                        data-bs-parent="#my_page_setup">
+                                        <div class="card-body bg-white">
+                                            <div class="card card-white">
+                                                <div class="card-heading clearfix">
+                                                    <h4 class="card-title">Basic Form</h4>
+                                                </div>
+                                                <div class="card-body">
+                                                    <form class="form needs-validation" method="post" novalidate onsubmit="return validateForm(event)">
+                                                        {%csrf_token %}
+                                                        <input type="hidden" name="action" value="basic" id="">
+                                                        <div class="row">
+                                                            <div class="col-md-6">
+                                                                <!-- Surname -->
+                                                                <div class="form-group">
+                                                                    <label for="surname">Surname</label>
+                                                                    <input type="text" class="form-control" id="surname" name="surname" placeholder="Enter surname" value="{{ user.surname }}" required>
+                                                                    <div class="invalid-feedback">Please provide a surname.</div>
+                                                                </div>
+                                                    
+                                                                <!-- Firstname -->
+                                                                <div class="form-group">
+                                                                    <label for="firstname">Firstname</label>
+                                                                    <input type="text" class="form-control" id="firstname" name="firstname" placeholder="Enter firstname" value="{{ user.firstname }}" required>
+                                                                    <div class="invalid-feedback">Please provide a firstname.</div>
+                                                                </div>
+                                                    
+                                                                <!-- Username -->
+                                                                <div class="form-group">
+                                                                    <label for="username">Username</label>
+                                                                    <input type="text" class="form-control" id="username" name="username" placeholder="Enter username" value="{{ user.username }}" required>
+                                                                    <div class="invalid-feedback">Please provide a username.</div>
+                                                                </div>
+                                                    
+                                                                <!-- Email -->
+                                                                <div class="form-group">
+                                                                    <label for="email">Email address</label>
+                                                                    <input type="email" class="form-control" id="email" name="email" placeholder="Enter email" value="{{ user.email }}" required>
+                                                                    <div class="invalid-feedback">Please provide a valid email address.</div>
+                                                                </div>
+                                                    
+                                                                <!-- Phone -->
+                                                                <div class="form-group">
+                                                                    <label for="phone">Phone</label>
+                                                                    <input  class="form-control"  type="tel" id="phone" name="phone" pattern="[0-9\s\-]+"  title="Please enter a valid phone number with optional dashes or spaces." placeholder="123-456-7890" value="{{ user.phone }}" required>
+                                                                    <div class="invalid-feedback">Please provide a valid phone number.</div>
+                                                                </div>
+                                                    
+                                                                <!-- Country -->
+                                                                <div class="form-group">
+                                                                    <label for="country">Country</label>
+                                                                    <select class="form-control" id="country" name="country" required>
+                                                                        <option value="">Select a country</option>
+                                                                        {% for country in countries %}
+                                                                        <option value="{{ country }}" {% if user.country == country %}selected{% endif %}>{{ country }}</option>
+                                                                        {% endfor %}
+                                                                    </select>
+                                                                    <div class="invalid-feedback">Please select a country.</div>
+                                                                </div>
+                                                            </div>
+                                                    
+                                                            <div class="col-md-6">
+                                                                <!-- Office -->
+                                                                <div class="form-group">
+                                                                    <label for="office">Office</label>
+                                                                    <input type="text" class="form-control" id="office" name="office" placeholder="Enter office" value="{{ user.office }}" required>
+                                                                    <div class="invalid-feedback">Please provide an office.</div>
+                                                                </div>
+                                                    
+                                                                <!-- Introduction -->
+                                                                <div class="form-group">
+                                                                    <label for="introduction">Introduction</label>
+                                                                    <textarea class="form-control" id="introduction" name="introduction" rows="1" placeholder="Enter introduction" required>{{ user.introduction }}</textarea>
+                                                                    <div class="invalid-feedback">Please provide an introduction.</div>
+                                                                </div>
+                                                    
+                                                                <!-- Role -->
+                                                                <div class="form-group">
+                                                                    <label for="role">Role</label>
+                                                                    <select class="form-control" id="role" name="role" required>
+                                                                        <option value="researcher" {% if user.role == 'researcher' %}selected{% endif %}>Researcher</option>
+                                                                        <option value="principal" {% if user.role == 'principal' %}selected{% endif %}>Principal</option>
+                                                                        <option value="undergraduate" {% if user.role == 'undergraduate' %}selected{% endif %}>Undergraduate</option>
+                                                                        <option value="phd" {% if user.role == 'phd' %}selected{% endif %}>PhD Student</option>
+                                                                        <option value="master" {% if user.role == 'master' %}selected{% endif %}>Master's Student</option>
+                                                                        <option value="postdoc" {% if user.role == 'postdoc' %}selected{% endif %}>Postdoc</option>
+                                                                        <option value="phdalumni" {% if user.role == 'phdalumni' %}selected{% endif %}>PhD Alumni</option>
+                                                                        <option value="msalumni" {% if user.role == 'msalumni' %}selected{% endif %}>Master's Alumnus</option>
+                                                                    </select>
+                                                                    <div class="invalid-feedback">Please select a role.</div>
+                                                                </div>
+                                                    
+                                                                <!-- Supervisor -->
+                                                                <div class="form-group">
+                                                                    <label for="supervisor">Supervisor</label>
+                                                                    <input type="text" class="form-control" id="supervisor" name="supervisor" placeholder="Enter supervisor's name" value="{{ user.supervisor }}" required>
+                                                                    <div class="invalid-feedback">Please provide a supervisor's name.</div>
+                                                                </div>
+                                                    
+                                                                <div class="form-group">
+                                                                    <label for="start_on">Start On</label>
+                                                                    <input type="month" class="form-control" id="start_on" name="start_on" value="{{ user.start_on|date:'Y-m' }}" required>
+                                                                    <div class="invalid-feedback" id="start-on-feedback">Please provide a start date.</div>
+                                                                </div>
+                                                    
+                                                                <!-- Expected Graduation -->
+                                                                <div class="form-group">
+                                                                    <label for="expected_graduation">Expected Graduation</label>
+                                                                    <input type="month" class="form-control" id="expected_graduation" name="expected_graduation" value="{{ user.experted_graduation|date:'Y-m' }}" required>
+                                                                    <div class="invalid-feedback" id="graduation-feedback">Please provide a valid expected graduation date.</div>
+                                                                </div>
+                                                            </div>
+                                                    
+                                                            <div class="col-12 d-flex justify-content-center">
+                                                                <!-- Submit Button -->
+                                                                <button type="submit" class="btn btn-primary btn-lg">Save Changes</button>
+                                                            </div>
+                                                        </div>
+                                                    </form>
+                                                    
+                                                </div>
+                                            </div>
+                                            
+                                        </div>
+                                    </div>
+                                </div>
+                                 <!-- Education -->
+                                <div class="card">
+                                    <div class="card-header" id="education">
+                                        <h2 class="mb-0">
+                                            <button 
+                                                class="btn btn-link collapsed" 
+                                                type="button" 
+                                                data-bs-toggle="collapse" 
+                                                data-bs-target="#educationCollapse" 
+                                                aria-expanded="false" 
+                                                aria-controls="educationCollapse">
+                                                Education 
+                                            </button>
+                                        </h2>
+                                    </div>
+                                    <div 
+                                        id="educationCollapse" 
+                                        class="collapse" 
+                                        aria-labelledby="education" 
+                                        data-bs-parent="#my_page_setup">
+                                        <div class="card-body">
+                                            <div class="row p-2 rounded">
+                                                <div class="col-12">
+                                                    <ul>
+                                                        {% for edu in educations %}
+                                                        <div class="row bg-white border-rounded pt-2">
+                                                            <form action="" id="edit-form" method="post">
+                                                                {%csrf_token%}
+                                                                <input type="hidden" name="action" value="edit-edu">
+                                                                <input type="hidden" name="id" value="{{ edu.id }}">
+                                                                
+                                                                <div class="form-group">
+                                                                    <input type="text" class="form-control" id="degree" name="degree" placeholder="Degree" value="{{ edu.degree }}">
+                                                                </div>
+                                                                
+                                                                <div class="form-group">
+                                                                    <input type="text" class="form-control" id="program" name="program" placeholder="Program" value="{{ edu.program }}">
+                                                                </div>                                                            
+
+                                                                <div class="form-group">
+                                                                    <input type="text" class="form-control" id="institution" name="institution" placeholder="Institution" value="{{ edu.institution }}">
+                                                                </div>
+
+                                                                <div class="form-group">
+                                                                    <div class="d-flex justify-content-between">
+                                                                        <input type="text" class="form-control" id="city" name="city" placeholder="City" value="{{ edu.city }}">
+                                                                        <input type="text" class="form-control" id="country" name="country" placeholder="Country" value="{{ edu.country }}">
+                                                                    </div>
+                                                                </div>                                                                
+
+                                                                <div class="form-group">
+                                                                    <input type="text" class="form-control" id="gpa" name="gpa" placeholder="GPA" value="{{ edu.GPA }}">
+                                                                </div>                                                                
+
+                                                                <div class="form-group">
+                                                                    <div class="d-flex justify-content-between">
+                                                                        <input type="month" class="form-control" id="start_date" name="start_date" placeholder="Start Date" value="{{ edu.start_date|date:'Y-m' }}">
+                                                                        <input type="month" class="form-control" id="end_date" name="end_date" placeholder="End Date" value="{{ edu.end_date|date:'Y-m' }}">
+                                                                    </div>
+                                                                    <br>
+                                                                    <button type="submit" class="btn btn-primary">Save</button>
+                                                                </div>
+                                                            </form>                                                            
+
+                                                            <form action="" method="post" id="delete">
+                                                                {%csrf_token%}
+                                                                <input type="hidden" name="action" value="delete-edu">
+                                                                <input type="hidden" name="id" value="{{ edu.id }}">
+                                                                <button type="submit" class="btn btn-danger">Delete</button>
+                                                            </form>
+                                                        </div>
+                                                        <hr>
+                                                        {% endfor %}                                                        
+                                                    </ul>
+                                                </div>
+                                                <div class="col-md-12">
+                                                   <!-- Button to open the modal -->
+                                                    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#educationModal">
+                                                        Add New Education
+                                                    </button>
+
+                                                    <!-- Modal -->
+                                                    <div class="modal fade" id="educationModal" tabindex="-1" role="dialog" aria-labelledby="educationModalLabel" aria-hidden="true">
+                                                        <div class="modal-dialog" role="document">
+                                                            <div class="modal-content">
+                                                                <div class="modal-header">
+                                                                    
+                                                                        <h5 class="modal-title" id="educationModalLabel">Add New</h5>
+                                                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                                            <span aria-hidden="true">&times;</span>
+                                                                        </button>
+                                                                </div>
+                                                                <div class="modal-body">
+                                                                    <form method="POST">
+                                                                        {% csrf_token %}
+                                                                        <div class="row">
+                                                                            <input type="hidden" name="action" value="add-edu">
+                                                                            <div class="col-md-6">
+                                                                                <!-- Degree -->
+                                                                                <div class="form-group">
+                                                                                    <label for="degree">Degree</label>
+                                                                                    <input type="text" class="form-control" id="degree" name="degree" placeholder="Enter your degree" required>
+                                                                                </div>                                                                   
+
+                                                                                <!-- Program -->
+                                                                                <div class="form-group">
+                                                                                    <label for="program">Program</label>
+                                                                                    <input type="text" class="form-control" id="program" name="program" placeholder="Enter program name" required>
+                                                                                </div>
+                                                                                <!-- Institution -->
+                                                                                <div class="form-group">
+                                                                                    <label for="institution">Institution</label>
+                                                                                    <textarea class="form-control" id="institution" name="institution" rows="3" placeholder="Enter institution name" required></textarea>
+                                                                                </div>
+                                                                                <!-- GPA -->
+                                                                                <div class="form-group">
+                                                                                    <label for="GPA">GPA</label>
+                                                                                    <input type="text" class="form-control" id="GPA" name="GPA" placeholder="Eg. 3.9/4.0" required>
+                                                                                </div>
+                                                                            </div>
+                                                                            
+                                                                            <div class="col-md-6">
+                                                                                <!-- Start Date -->
+                                                                                <div class="form-group">
+                                                                                    <label for="start_date">Start Date</label>
+                                                                                    <input type="month" class="form-control" id="start_date" name="start_date" required>
+                                                                                </div>
+
+                                                                                <!-- End Date -->
+                                                                                <div class="form-group">
+                                                                                    <label for="end_date">End Date</label>
+                                                                                    <input type="month" class="form-control" id="end_date" name="end_date" required>
+                                                                                </div>
+                                                                                <!-- City -->
+                                                                                <div class="form-group">
+                                                                                    <label for="city">City</label>
+                                                                                    <input type="text" class="form-control" id="city" name="city" placeholder="Enter city" required>
+                                                                                </div>
+
+                                                                                <!-- Country -->
+                                                                                <div class="form-group">
+                                                                                    <label for="country">Country</label>
+                                                                                    <input type="text" class="form-control" id="country" name="country" placeholder="Enter country" required>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                        <!-- Submit Button -->
+                                                                        <button type="submit" class="btn btn-primary">Submit</button>
+                                                                    </form>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Files -->
+                                <div class="card">
+                                    <div class="card-header" id="files">
+                                        <h2 class="mb-0">
+                                            <button 
+                                                class="btn btn-link collapsed" 
+                                                type="button" 
+                                                data-bs-toggle="collapse" 
+                                                data-bs-target="#filesCollapse" 
+                                                aria-expanded="false" 
+                                                aria-controls="filesCollapse">
+                                                Files 
+                                            </button>
+                                        </h2>
+                                    </div>
+                                    <div 
+                                        id="filesCollapse" 
+                                        class="collapse" 
+                                        aria-labelledby="files" 
+                                        data-bs-parent="#my_page_setup">
+                                        <div class="card-body">
+                                            <div class="row d-flex justify-contents-center align-items-center p-3 rounded">
+                                                <div class="col-xl-3 col-lg-4 col-md-6 col-sm-12 px-2 d-block border border justify-contents-center align-items-center">
+                                                    <h6>Profile picture</h6>
+                                                    <div class="w-100"><img src="/media/{{user.profile_picture}}" style="width: 100%;" alt=""></div>
+                                                    <form action="" method="post" class="form" enctype="multipart/form-data">
+                                                        {%csrf_token%}
+                                                        <input type="hidden" name="action" value="change_profile_picture" id="action">
+                                                        <input type="file" accept="*/image" name="profile_picture" id="profile_picture">
+                                                        <button class="btn btn-primary" id="change_profile_picture_button">Save </button>
+                                                    </form>
+                                                </div>
+                                                <div class="col-xl-3 col-lg-4 col-md-6 col-sm-12 px-2 d-block border border justify-contents-center align-items-center">
+                                                    <h6>Illustration picture</h6>
+                                                    <div class="w-100"><img src="/media/{{user.illustrations_picture}}" style="width: 100%;" alt=""></div>
+                                                    <form action="" method="post" class="form" enctype="multipart/form-data">
+                                                        {%csrf_token%}
+                                                        <input type="hidden" name="action" value="change_illustrations_picture" id="action">
+                                                        <input type="file" accept="*/image" name="illustrations_picture" id="illustrations_picture">
+                                                        <button class="btn btn-primary" id="change_illustrations_picture_button">Save </button>
+                                                    </form>
+                                                </div>
+                                                <div class="col-xl-3 col-lg-4 col-md-6 col-sm-12 px-2 d-block border border justify-contents-center align-items-center">
+                                                    <h6>Profile picture</h6>
+                                                    <div class="w-100">cv preview</div>
+                                                    <form action="" method="post" class="form" enctype="multipart/form-data">
+                                                        {%csrf_token%}
+                                                        <input type="hidden" name="action" value="change_cv" id="action">
+                                                        <input type="file" accept="*/image" name="cv" id="cv">
+                                                        <button class="btn btn-primary" id="change_cv_button">Save </button>
+                                                    </form>
+                                                </div>
+                                                
+                                                
+                                                <!-- <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 col-xs-12  border border justify-contents-center align-items-center">
+                                                    Hello 4
+                                                </div>
+                                                <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 col-xs-12  border border justify-contents-center align-items-center">
+                                                    Hello 5
+                                                </div>
+                                                <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 col-xs-12  border border justify-contents-center align-items-center">
+                                                    Hello 6
+                                                </div> -->
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Research -->
+                                <div class="card">
+                                    <div class="card-header" id="research">
+                                        <h2 class="mb-0">
+                                            <button 
+                                                class="btn btn-link collapsed" 
+                                                type="button" 
+                                                data-bs-toggle="collapse" 
+                                                data-bs-target="#researchCollapse" 
+                                                aria-expanded="false" 
+                                                aria-controls="researchCollapse">
+                                                Research 
+                                            </button>
+                                        </h2>
+                                    </div>
+                                    <div 
+                                        id="researchCollapse" 
+                                        class="collapse" 
+                                        aria-labelledby="research" 
+                                        data-bs-parent="#my_page_setup">
+                                        <div class="card-body">
+                                            <div class="row p-2 rounded">
+                                                <div class="col-md-12">
+                                                    <form action="" method="post" >
+                                                        <div class="row">                                                        
+                                                            {% csrf_token %}
+                                                            <div>
+                                                            </div>
+                                                            <input type="hidden" name="action" value="research_update" id="">
+                                                            <div class="col-12 form-group">
+                                                                <label for="research_area">Research Area</label>
+                                                                <input class="form-control" type="text" id="research_area" placeholder="Research Area" value="{{project.title}}" name="project_topic">
+                                                            </div>
+                                                            <br><hr>
+                                                            
+                                                            <div class="col-12 form-group">
+                                                                <label for="">Project Descriptions</label>
+                                                                {%for desc in project.description %}
+                                                                <input class="form-control" type="text" name="project_descriptions_{{desc}}" value="{{desc}}" placeholder="New Description" id="">
+                                                                {% endfor %}
+                                                                <label for="new_project_descriptions">New Project Description</label><br>
+                                                                <input class="form-control" type="text" name="new_project_descriptions" placeholder="New Description" id="new_project_descriptions">
+                                                            </div>
+                                                            <hr>
+                                                            <div class="col-md-12">
+                                                                <div class="row">
+                                                                {%for key in project.keywords %}
+                                                                <div class="col-md-6 p-3">
+                                                                    <input class="form-control" type="text" placeholder="New Keyword" name="project_keywords_{{key}}" value="{{key}}" id="">
+                                                                </div>
+                                                                {% endfor%}
+                                                                </div>
+                                                                <label for="new_project_keyword">New Project Keyword</label>
+                                                                <input class="form-control" type="text" placeholder="New Keyword" name="new_project_keyword" id="new_project_keyword"> <br>
+                                                            </div>    
+                                                            <hr>                                                           
+                                                            <div class="col-12 d-flex justify-content-center">
+                                                                <button type="submit" class="btn btn-primary">Save Changes</button>
+                                                            </div>
+                                                        </div>
+
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                               
+                                <!-- Publications -->
+                                <div class="card">
+                                    <div class="card-header" id="publications">
+                                        <h2 class="mb-0">
+                                            <button 
+                                                class="btn btn-link collapsed" 
+                                                type="button" 
+                                                data-bs-toggle="collapse" 
+                                                data-bs-target="#publicationCollapse" 
+                                                aria-expanded="false" 
+                                                aria-controls="publicationCollapse">
+                                                Publications
+                                            </button>
+                                        </h2>
+                                    </div>
+                                    <div 
+                                        id="publicationCollapse" 
+                                        class="collapse" 
+                                        aria-labelledby="publications" 
+                                        data-bs-parent="#my_page_setup">
+                                        <div class="card-body">
+                                            <div class="container mt-4">
+                                                <h2 class="mb-3">Manage Publications</h2>
+
+                                                <form method="post" class="bg-white p-3 border mb-3" class="mb-4" enctype="multipart/form-data">
+                                                    {% csrf_token %}
+                                            
+                                                    <h4>Add new publication</h4>
+                                            
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Title</label>
+                                                        <input type="text" class="form-control" name="title" value="" required>
+                                                    </div>
+                                            
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Date</label>
+                                                        <input type="date" class="form-control" name="date" value="">
+                                                    </div>                                                  
+                                           
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Abstract</label>
+                                                        <textarea class="form-control" name="abstract"></textarea>
+                                                    </div>                                            
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Publication Link</label>
+                                                        <input type="url" class="form-control" name="link" value="">
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">PDF</label>
+                                                        <input type="file" class="form-control" name="pdf">
+                                                        <div class="form-text text-danger">
+                                                            * Leave this field empty if you do not intend adding the file.
+                                                        </div>
+                                                    </div>
+                                                    
+                                            
+                                                    <div class="mb-3">
+                                                        <label for="visibility" class="form-label">Visibility</label>
+                                                        <select class="form-select" id="visibility" name="visibility">
+                                                            <option value="True" {% if publication.visibility %}selected{% endif %}>Visible</option>
+                                                            <option value="False" {% if not publication.visibility %}selected{% endif %}>Hidden</option>
+                                                        </select>
+                                                    </div>
+                                                                                                
+                                                    <button type="submit" class="btn btn-success" name="action" value="add_new_pub">Add New</button>
+
+                                                </form>
+                                                <!-- Update / Delete Existing Publications -->
+                                                {% for publication in publications %}
+                                                <form method="post" class="bg-white p-3 border mb-3" class="mb-4" enctype="multipart/form-data">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="action" value="update_pub">
+                                                    <input type="hidden" name="publication_id" value="{{ publication.id }}">
+                                            
+                                                    <h4>Edit Publication: {{ publication.title }}</h4>
+                                            
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Title</label>
+                                                        <input type="text" class="form-control" name="title" value="{{ publication.title }}" required>
+                                                    </div>
+                                            
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Date</label>
+                                                        <input type="date" class="form-control" name="date" value="{{ publication.publication_date|date:'Y-m-d' }}">
+                                                    </div>                                                  
+                                           
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Abstract</label>
+                                                        <textarea class="form-control" name="abstract">{{ publication.abstract|default:'' }}</textarea>
+                                                    </div>                                            
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Publication Link</label>
+                                                        <input type="url" class="form-control" name="link" value="{{ publication.link|default:'' }}">
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">PDF</label>
+                                                        <input type="file" class="form-control" name="pdf">
+                                                        <div class="form-text text-danger">
+                                                            * Selecting a new file will replace the existing one. Leave this field empty if you do not intend changing the file.
+                                                        </div>
+                                                    </div>
+                                                    
+                                            
+                                                    <div class="mb-3">
+                                                        <label for="visibility" class="form-label">Visibility</label>
+                                                        <select class="form-select" id="visibility" name="visibility">
+                                                            <option value="True" {% if publication.visibility %}selected{% endif %}>Visible</option>
+                                                            <option value="False" {% if not publication.visibility %}selected{% endif %}>Hidden</option>
+                                                        </select>
+                                                    </div>
+                                                                                                
+                                                    <button type="submit" class="btn btn-success" name="action" value="update_pub">Update</button>
+                                                    <button type="submit" class="btn btn-danger" name="action" value="delete_pub" onclick="return confirm('Are you sure?')">Delete</button>
+
+                                                </form>
+                                                {% endfor %}
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Skills -->
+                                <div class="card">
+                                    <div class="card-header" id="Skills">
+                                        <h2 class="mb-0">
+                                            <button 
+                                                class="btn btn-link collapsed" 
+                                                type="button" 
+                                                data-bs-toggle="collapse" 
+                                                data-bs-target="#skillsCollapse" 
+                                                aria-expanded="false" 
+                                                aria-controls="skillsCollapse">
+                                                Skills
+                                            </button>
+                                        </h2>
+                                    </div>
+                                    <div 
+                                        id="skillsCollapse" 
+                                        class="collapse" 
+                                        aria-labelledby="Skills" 
+                                        data-bs-parent="#my_page_setup">
+                                        <div class="card-body">
+                                            <div class="row">
+                                                
+                                                <div class="container">
+                                                    <div class="card shadow-lg p-4">
+                                                        <h2 class="mb-4 text-center">Update Your Skills</h2>
+                                                        <form method="post" id="" novalidate>
+                                                            {% csrf_token %}
+                                                            <input type="hidden" name="action" value="update_skills">
+                                                
+                                                            <!-- Django Messages -->
+                                                            {% if messages %}
+                                                            <div class="mb-3">
+                                                                {% for message in messages %}
+                                                                <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+                                                                    {{ message }}
+                                                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                                                </div>
+                                                                {% endfor %}
+                                                            </div>
+                                                            {% endif %}
+                                                
+                                                            <div id="skill-list">
+                                                                {% for skill in skills %}
+                                                                <div class="mb-4 border rounded p-3 bg-light">
+                                                                    <label for="skill_name_{{ skill.id }}" class="form-label fw-bold">Skill Name</label>
+                                                                    <input type="text" class="form-control skill-name" name="skill_name_{{ skill.id }}" value="{{ skill.name }}" required>
+                                                                    <div class="invalid-feedback">Skill name cannot be empty or duplicated.</div>
+                                                
+                                                                    <label for="category_{{ skill.id }}" class="form-label mt-2 fw-bold">Category</label>
+                                                                    <select class="form-select" name="category_{{ skill.id }}" required>
+                                                                        <option value="Software" {% if skill.category == "Software" %}selected{% endif %}>Software</option>
+                                                                        <option value="Hardware" {% if skill.category == "Hardware" %}selected{% endif %}>Hardware</option>
+                                                                        <option value="Tools" {% if skill.category == "Tools" %}selected{% endif %}>Tools</option>
+                                                                    </select>
+                                                
+                                                                    <label for="proficiency_{{ skill.id }}" class="form-label mt-2 fw-bold">Proficiency Level</label>
+                                                                    <select class="form-select" name="proficiency_{{ skill.id }}" required>
+                                                                        <option value="beginner" {% if skill.proficiency_level == "beginner" %}selected{% endif %}>Beginner</option>
+                                                                        <option value="intermediate" {% if skill.proficiency_level == "intermediate" %}selected{% endif %}>Intermediate</option>
+                                                                        <option value="advanced" {% if skill.proficiency_level == "advanced" %}selected{% endif %}>Advanced</option>
+                                                                        <option value="expert" {% if skill.proficiency_level == "expert" %}selected{% endif %}>Expert</option>
+                                                                    </select>
+                                                                </div>
+                                                                {% endfor %}
+                                                            </div>
+                                                
+                                                            <h4 class="mt-4">Add New Skill</h4>
+                                                            <div class="mb-4 border rounded p-3 bg-light">
+                                                                <label for="new_skill_name" class="form-label fw-bold">Skill Name</label>
+                                                                <input type="text" class="form-control" name="new_skill_name" id="new_skill_name">
+                                                                <div class="invalid-feedback">Skill name must be unique.</div>
+                                                
+                                                                <label for="new_category" class="form-label mt-2 fw-bold">Category</label>
+                                                                <select class="form-select" name="new_category" id="new_category">
+                                                                    <option value="Software">Software</option>
+                                                                    <option value="Hardware">Hardware</option>
+                                                                    <option value="Tools">Tools</option>
+                                                                </select>
+                                                
+                                                                <label for="new_proficiency" class="form-label mt-2 fw-bold">Proficiency Level</label>
+                                                                <select class="form-select" name="new_proficiency" id="new_proficiency">
+                                                                    <option value="beginner">Beginner</option>
+                                                                    <option value="intermediate">Intermediate</option>
+                                                                    <option value="advanced">Advanced</option>
+                                                                    <option value="expert">Expert</option>
+                                                                </select>
+                                                            </div>                                                
+                                                            <button type="submit" class="btn btn-primary w-100">Save Changes</button>
+                                                        </form>
+                                                    </div>
+                                                </div>                                           
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Awards -->
+                                <div class="card">
+                                    <div class="card-header" id="Awards">
+                                        <h2 class="mb-0">
+                                            <button 
+                                                class="btn btn-link collapsed" 
+                                                type="button" 
+                                                data-bs-toggle="collapse" 
+                                                data-bs-target="#awardsCollapse" 
+                                                aria-expanded="false" 
+                                                aria-controls="awardsCollapse">
+                                                Awards
+                                            </button>
+                                        </h2>
+                                    </div>
+                                    <div 
+                                        id="awardsCollapse" 
+                                        class="collapse" 
+                                        aria-labelledby="awards" 
+                                        data-bs-parent="#my_page_setup">
+                                        <div class="card-body">
+                                            <div class="row">
+                                                
+                                                <div class="container">
+                                                    <div class="card shadow-lg p-4">
+                                                        <h2 class="mb-4 text-center">Update Your Awards</h2>
+                                                        <!-- ------------------------------------------------ -->
+                                                        <!-- Add New Award Form -->
+                                                        <form method="post" class="bg-white p-3 border mb-4" enctype="multipart/form-data">
+                                                            {% csrf_token %}
+                                                            <h4>Add New Award</h4>
+
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Title</label>
+                                                                <input type="text" class="form-control" name="title" value="{{ award.title }}" required>
+                                                            </div>
+
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Description</label>
+                                                                <textarea class="form-control" name="description">{{ award.description }}</textarea>
+                                                                <div class="form-text text-sm text-primary">
+                                                                    Description is optional.
+                                                                </div>
+                                                            </div>
+
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Date</label>
+                                                                <input type="date" class="form-control" name="date" value="{{ award.date|date:'Y-m-d' }}" required>
+                                                            </div>   
+
+                                                            <button type="submit" class="btn btn-success" name="action" value="add_new_award">Add New</button>
+                                                        </form>
+
+                                                        <!-- Update / Delete Existing Awards -->
+                                                        {% for award in awards %}
+                                                        <form method="post" class="bg-white p-3 border mb-4" enctype="multipart/form-data">
+                                                            {% csrf_token %}
+                                                            <input type="hidden" name="award_id" value="{{ award.id }}">
+
+                                                            <h4>Edit Award: {{ award.title }}</h4>
+
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Title</label>
+                                                                <input type="text" class="form-control" name="title" value="{{ award.title }}" required>
+                                                            </div>
+
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Description</label>
+                                                                <textarea class="form-control" name="description">{{ award.description }}</textarea>
+                                                                <div class="form-text text-sm">
+                                                                    Description is optional.
+                                                                </div>
+                                                            </div>
+
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Date</label>
+                                                                <input type="date" class="form-control" name="date" value="{{ award.date|date:'Y-m-d' }}" required>
+                                                            </div>
+
+                                                            <button type="submit" class="btn btn-success" name="action" value="update_award">Update</button>
+                                                            <!-- Delete Button (Triggers Modal) -->
+                                                            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ award.id }}">
+                                                                Delete
+                                                            </button>
+
+                                                        </form>
+                                                        <!-- Delete Confirmation Modal -->
+                                                        <div class="modal fade" id="deleteModal{{ award.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ award.id }}" aria-hidden="true">
+                                                            <div class="modal-dialog">
+                                                                <div class="modal-content">
+                                                                    <div class="modal-header bg-danger text-white">
+                                                                        <h5 class="modal-title" id="deleteModalLabel{{ award.id }}">⚠️ Confirm Deletion</h5>
+                                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                                    </div>
+                                                                    <div class="modal-body">
+                                                                        <p class="fw-bold text-danger">Are you sure you want to delete this award?</p>
+                                                                        <p><strong>Title:</strong> {{ award.title }}</p>
+                                                                        <p><strong>Description:</strong> {{ award.description|default:'No description' }}</p>
+                                                                        <p><strong>Date:</strong> {{ award.date|date:"F d, Y" }}</p>
+                                                                        <p><strong>Organization:</strong> {{ award.organization|default:'Not specified' }}</p>
+                                                                        <p class="text-warning">This action cannot be undone!</p>
+                                                                    </div>
+                                                                    <div class="modal-footer">
+                                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+
+                                                                        <!-- Submit the form when clicking "Yes, Delete" -->
+                                                                        <form method="post">
+                                                                            {% csrf_token %}
+                                                                            <input type="hidden" name="action" value="delete_award">
+                                                                            <input type="hidden" name="award_id" value="{{ award.id }}">
+                                                                            <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                                                                        </form>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        {% endfor %}
+
+                                                        <!-- ------------------------------------------------ -->
+                                                    </div>
+                                                </div>                                           
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Professional Experience -->
+                                <div class="card">
+                                    <div class="card-header" id="Pexp">
+                                        <h2 class="mb-0">
+                                            <button 
+                                                class="btn btn-link collapsed" 
+                                                type="button" 
+                                                data-bs-toggle="collapse" 
+                                                data-bs-target="#pexpsCollapse" 
+                                                aria-expanded="false" 
+                                                aria-controls="pexpsCollapse">
+                                                Professional Experiences
+                                            </button>
+                                        </h2>
+                                    </div>
+                                    <div 
+                                        id="pexpsCollapse" 
+                                        class="collapse" 
+                                        aria-labelledby="pexps" 
+                                        data-bs-parent="#my_page_setup">
+                                        <div class="card-body">
+                                            <div class="row">
+                                                
+                                                <div class="container">
+                                                    <div class="card shadow-lg p-4">
+                                                        <h2 class="mb-4 text-center">Update Your Professional Experiences</h2>
+                                                        <!-- ------------------------------------------------ -->
+                                                        <!-- Form to Add New Experience -->
+                                                        <form method="post" class="bg-white p-3 border mb-3" enctype="multipart/form-data">
+                                                            {% csrf_token %}
+                                                            <h4>Add New Experience</h4>
+
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Title</label>
+                                                                <input type="text" class="form-control" name="title" value="" required>
+                                                            </div>
+
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Institution</label>
+                                                                <input type="text" class="form-control" name="institution" value="">
+                                                            </div>
+
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Description (one per line)</label>
+                                                                <textarea class="form-control" name="description" ></textarea>
+                                                                <div class="form-text text-sm">Enter multiple descriptions, each on a new line.</div>
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <label class="form-label">City</label>
+                                                                <input type="text" class="form-control" name="city" value="{{ experience.city }}">
+                                                            </div>
+                                                            
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Country</label>
+                                                                <input type="text" class="form-control" name="country" list="country-list" value="{{ experience.country }}">
+                                                                <datalist id="country-list">
+                                                                    {% for country in countries %}
+                                                                    <option value="{{ country }}"></option>
+                                                                    {% endfor %}
+                                                                </datalist>
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Start Date</label>
+                                                                <input type="date" class="form-control" name="start_date">
+                                                            </div>
+
+                                                            <div class="mb-3">
+                                                                <label class="form-label">End Date</label>
+                                                                <input type="date" class="form-control" name="end_date">
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Show Month</label>
+                                                                <select class="form-control" name="show_month">
+                                                                    <option value="true" {% if experience.show_month %}selected{% endif %}>Yes</option>
+                                                                    <option value="false" {% if not experience.show_month %}selected{% endif %}>No</option>
+                                                                </select>
+                                                            </div>
+
+                                                            <button type="submit" class="btn btn-success" name="action" value="add_new_experience">Add New</button>
+                                                        </form>
+
+                                                        <!-- Forms for Editing Existing Experiences -->
+                                                        {% for experience in professional_experience %}
+                                                        <form method="post" class="bg-white p-3 border mb-3">
+                                                            {% csrf_token %}
+                                                            <input type="hidden" name="experience_id" value="{{ experience.id }}">
+
+                                                            <h4>Edit Experience: {{ experience.title }}</h4>
+
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Title</label>
+                                                                <input type="text" class="form-control" name="title" value="{{ experience.title }}" required>
+                                                            </div>
+
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Institution</label>
+                                                                <input type="text" class="form-control" name="institution" value="{{ experience.institution }}">
+                                                            </div>
+
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Description (one per line)</label>
+                                                                <textarea class="form-control "rows="4" name="description">{% if experience.description %}{% for item in experience.description %}{{ item }}{% if not forloop.last %}&#10;{% endif %}{% endfor %}{% endif %}</textarea>
+                                                                <div class="form-text text-sm">Enter multiple descriptions, each on a new line.</div>
+                                                            </div>
+                                                            
+                                                            <div class="mb-3">
+                                                                <label class="form-label">City</label>
+                                                                <input type="text" class="form-control" name="city" value="{{ experience.city }}">
+                                                            </div>
+                                                            
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Country</label>
+                                                                <input type="text" class="form-control" name="country" list="country-list" value="{{ experience.country }}">
+                                                                <datalist id="country-list">
+                                                                    {% for country in countries %}
+                                                                    <option value="{{ country }}"></option>
+                                                                    {% endfor %}
+                                                                </datalist>
+                                                            </div>
+                                                            
+                                                            
+                                                            
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Start Date</label>
+                                                                <input type="date" class="form-control" name="start_date" value="{{ experience.start_date|date:'Y-m-d' }}">
+                                                            </div>
+                                                            
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Show Month</label>
+                                                                <select class="form-control" name="show_month">
+                                                                    <option value="true" {% if experience.show_month %}selected{% endif %}>Yes</option>
+                                                                    <option value="false" {% if not experience.show_month %}selected{% endif %}>No</option>
+                                                                </select>
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <label class="form-label">End Date</label>
+                                                                <input type="date" class="form-control" name="end_date" value="{{ experience.end_date|date:'Y-m-d' }}">
+                                                            </div>
+
+                                                            <button type="submit" class="btn btn-success" name="action" value="update_experience">Update</button>
+                                                            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteExperienceModal{{ experience.id }}">
+                                                                Delete
+                                                            </button>
+                                                        </form>
+                                                        <!-- Delete Confirmation Modal -->
+                                                        <div class="modal fade" id="deleteExperienceModal{{ experience.id }}" tabindex="-1" aria-labelledby="deleteExperienceLabel" aria-hidden="true">
+                                                            <div class="modal-dialog">
+                                                                <div class="modal-content">
+                                                                    <div class="modal-header bg-danger text-white">
+                                                                        <h5 class="modal-title" id="deleteExperienceLabel">Confirm Deletion</h5>
+                                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                                    </div>
+                                                                    <div class="modal-body">
+                                                                        <p><strong>Are you sure you want to delete this experience?</strong></p>
+                                                                        <ul>
+                                                                            <li><strong>Title:</strong> {{ experience.title }}</li>
+                                                                            <li><strong>Institution:</strong> {{ experience.institution|default:"N/A" }}</li>
+                                                                            <li><strong>Start Date:</strong> {{ experience.start_date|date:"Y-m-d" }}</li>
+                                                                            <li><strong>End Date:</strong> {{ experience.end_date|date:"Y-m-d" }}</li>
+                                                                        </ul>
+                                                                        <p class="text-danger">This action cannot be undone.</p>
+                                                                    </div>
+                                                                    <div class="modal-footer">
+                                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                                        <form method="post">
+                                                                            {% csrf_token %}
+                                                                            <input type="hidden" name="action" value="delete_experience">
+                                                                            <input type="hidden" name="experience_id" value="{{ experience.id }}">
+                                                                            <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                                                                        </form>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        {% endfor %}
+
+
+                                                        <!-- ------------------------------------------------ -->
+                                                    </div>
+                                                </div>                                           
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Row -->
+                    
+                </div>
+                <!-- end page main wrapper -->
+                
+            </div>
+           
+
+    {% include 'users/end.html' %}
+    <script>
+        function validateForm(event) {
+            event.preventDefault();
+            const form = document.querySelector('.needs-validation');
+            const startOn = document.getElementById('start_on');
+            const expectedGraduation = document.getElementById('expected_graduation');
+            const startOnFeedback = document.getElementById('start-on-feedback');
+            const graduationFeedback = document.getElementById('graduation-feedback');
+            const today = new Date();
+
+            let isValid = true;
+
+            // Clear previous validation messages
+            startOn.classList.remove('is-invalid');
+            expectedGraduation.classList.remove('is-invalid');
+            startOnFeedback.textContent = 'Please provide a start date.';
+            graduationFeedback.textContent = 'Please provide a valid expected graduation date.';
+
+            // Check if expected graduation is after start date
+            if (new Date(expectedGraduation.value) <= new Date(startOn.value)) {
+                expectedGraduation.classList.add('is-invalid');
+                graduationFeedback.textContent = 'Expected Graduation date must be later than Start date.';
+                isValid = false;
+            }
+
+            // Check if expected graduation is after today's date
+            if (new Date(expectedGraduation.value) <= today) {
+                expectedGraduation.classList.add('is-invalid');
+                graduationFeedback.textContent = 'Expected Graduation date must be later than today.';
+                isValid = false;
+            }
+
+            // If form is valid, allow submission
+            if (isValid && form.checkValidity()) {
+                form.submit();
+            } else {
+                form.classList.add('was-validated');
+            }
+
+            return false; // Prevent default form submission
+        }
+
+
+    </script>
+    <script>
+        // Wait for the document to fully load before attaching events
+        document.addEventListener('DOMContentLoaded', function () {
+            // Get the button that opens the modal
+            var btn = document.querySelector('[data-toggle="modal"]');
+            
+            // Get the modal element
+            var modal = document.getElementById('educationModal');
+            
+            // Attach a click event to the button to show the modal
+            btn.addEventListener('click', function () {
+                $(modal).modal('show'); // Use jQuery to show the modal
+            });
+      
+            // Optional: To close the modal when the close button is clicked
+            var closeBtn = modal.querySelector('.close');
+            closeBtn.addEventListener('click', function () {
+                $(modal).modal('hide'); // Use jQuery to hide the modal
+            });
+        });
+    </script>
+    <script>
+        document.getElementById("skillForm").addEventListener("submit", function(event) {
+            let isValid = true;
+            let skillNames = new Set();
+            let formElements = this.elements;
+        
+            document.querySelectorAll(".skill-name").forEach(input => {
+                let value = input.value.trim();
+                if (value === "" || skillNames.has(value.toLowerCase())) {
+                    input.classList.add("is-invalid");
+                    isValid = false;
+                } else {
+                    input.classList.remove("is-invalid");
+                    skillNames.add(value.toLowerCase());
+                }
+            });
+        
+            let newSkill = document.getElementById("new_skill_name").value.trim();
+            if (newSkill !== "" && skillNames.has(newSkill.toLowerCase())) {
+                document.getElementById("new_skill_name").classList.add("is-invalid");
+                isValid = false;
+            } else {
+                document.getElementById("new_skill_name").classList.remove("is-invalid");
+            }
+        
+            if (!isValid) {
+                event.preventDefault();
+            }
+        });
+    </script>
+    <script>
+        document.getElementById("pub_form").addEventListener("submit", function(event) {
+            let valid = true;
+    
+            document.querySelectorAll(".form-control").forEach(function(input) {
+                if (input.hasAttribute("required") && !input.value.trim()) {
+                    input.classList.add("is-invalid");
+                    valid = false;
+                } else {
+                    input.classList.remove("is-invalid");
+                }
+            });
+    
+            if (!valid) {
+                event.preventDefault();
+            }
+        });
+    </script>
+
+
+</body>
+
+
+</html>
