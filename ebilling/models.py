@@ -78,6 +78,8 @@ class EBill(models.Model):
     token = models.TextField()
     uuid = models.CharField(max_length=255, unique=True)
     device_id = models.CharField(max_length=255, verbose_name='Device Id, e.g. Meter serial number')
+    momo_number = models.CharField(max_length=15, blank=True, default='', verbose_name='Payer MoMo number')
+    momo_name = models.CharField(max_length=255, blank=True, default='', verbose_name='Payer MoMo name')
     balance_before = models.FloatField(null=False, default=0)
     balance_after = models.FloatField(null=True, blank=True)
 

@@ -1,0 +1,56 @@
+{% extends 'dashboard/base.html' %}
+{% load dashboard_extras %}
+{% block title %}Applications{% endblock %}
+{% block crumb %}Applications{% endblock %}
+{% block heading %}Applications{% endblock %}
+
+{% block content %}
+<div class="grid-2">
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Registered applications</h2>
+      <span class="muted small">Only these apps can call <code>/bill/</code></span>
+    </div>
+    <div class="table-wrap">
+      <table class="table-d">
+        <thead>
+          <tr><th>Name</th><th>Key</th><th>IP address</th><th class="num">Requests</th><th class="num">Collected</th><th></th></tr>
+        </thead>
+        <tbody>
+          {% for app in apps %}
+            <tr>
+              <td>
+                <div class="fw-semibold">{{ app.name }}</div>
+                <div class="muted small truncate" title="{{ app.url }}">{{ app.url }}</div>
+              </td>
+              <td>
+                <span class="mono">{{ app.key }}</span>
+                <button class="btn btn-sm p-0 ms-1 muted" type="button" title="Copy key"
+                        onclick="navigator.clipboard.writeText('{{ app.key|escapejs }}'); this.innerHTML='<i data-lucide=&quot;check&quot;></i>'; lucide.createIcons();">
+                  <i data-lucide="copy"></i>
+                </button>
+              </td>
+              <td class="mono">{{ app.ip_address }}</td>
+              <td class="num">{{ app.stats.count|default:0 }}</td>
+              <td class="num">{{ app.stats.collected|money }}</td>
+              <td class="num">
+                <a class="btn btn-ghost btn-sm" href="{% url 'dashboard:application_edit' app.pk %}">Edit</a>
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="6"><div class="empty"><i data-lucide="app-window"></i>No applications registered yet.</div></td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel align-self-start">
+    <div class="panel-head"><h2>Register an application</h2></div>
+    <form class="panel-body" method="post">
+      {% include 'dashboard/_app_form.html' %}
+      <button class="btn btn-brand w-100" type="submit"><i data-lucide="plus"></i> Register</button>
+    </form>
+  </section>
+</div>
+{% endblock %}

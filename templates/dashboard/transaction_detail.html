@@ -1,0 +1,71 @@
+{% extends 'dashboard/base.html' %}
+{% load dashboard_extras %}
+{% block title %}Transaction{% endblock %}
+{% block crumbs %}<i data-lucide="chevron-right"></i><a href="{% url 'dashboard:transactions' %}">Transactions</a>{% endblock %}
+{% block crumb %}{{ bill.uuid|truncatechars:13 }}{% endblock %}
+{% block heading %}{{ bill.amount|money }}{% endblock %}
+{% block actions %}
+  {% include 'dashboard/_status.html' with status=bill.status %}
+  {% if not bill.transaction_complete %}
+    <form method="post" action="{% url 'dashboard:transaction_check' bill.pk %}">
+      {% csrf_token %}
+      <button class="btn btn-ghost btn-sm" type="submit"><i data-lucide="refresh-cw"></i> Check status with MTN</button>
+    </form>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="grid-2">
+  <section class="panel">
+    <div class="panel-head"><h2>Details</h2></div>
+    <dl class="kv">
+      <dt>Reference ID</dt><dd class="mono">{{ bill.uuid }}</dd>
+      <dt>Amount</dt><dd>{{ bill.amount|money }}</dd>
+      <dt>Payer name</dt><dd>{{ bill.momo_name|default:"—" }}</dd>
+      <dt>Payer MoMo number</dt><dd class="mono">{{ bill.momo_number|default:"—" }}</dd>
+      <dt>Application</dt><dd>{{ bill.app }}</dd>
+      <dt>Username</dt><dd>{{ bill.username|default:"—" }}</dd>
+      <dt>Device ID</dt><dd class="mono">{{ bill.device_id }}</dd>
+      <dt>MoMo transaction ID</dt><dd class="mono">{{ bill.financial_transaction_id|default:"—" }}</dd>
+      <dt>Balance before / after</dt><dd>{{ bill.balance_before|money }} → {% if bill.balance_after is not None %}{{ bill.balance_after|money }}{% else %}—{% endif %}</dd>
+      <dt>Initial MoMo response</dt><dd>{{ bill.momo_api_initial_status_code|default:"—" }} · {{ bill.momo_api_initial_message|default:"—" }}</dd>
+      <dt>Requesting IP</dt><dd class="mono">{{ bill.app_ip }}</dd>
+      <dt>Request URL</dt><dd class="mono">{{ bill.app_url }}</dd>
+      <dt>Webhook URL</dt><dd class="mono">{{ bill.webhook_url|default:"—" }}</dd>
+    </dl>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><h2>Lifecycle</h2></div>
+    <div class="panel-body">
+      <ul class="timeline">
+        <li>
+          <span class="dot on"></span>
+          <div class="title">Request created</div>
+          <div class="when">{{ bill.request_datetime|date:"d M Y, H:i:s" }}</div>
+        </li>
+        <li>
+          <span class="dot {% if bill.request_sent %}on{% endif %}"></span>
+          <div class="title">Sent to MTN MoMo</div>
+          <div class="when">{% if bill.request_sent %}HTTP {{ bill.momo_api_initial_status_code }}{% else %}Not sent{% endif %}</div>
+        </li>
+        <li>
+          <span class="dot {% if bill.status == 'SUCCESSFUL' %}on{% elif bill.status == 'FAILED' %}bad{% endif %}"></span>
+          <div class="title">Payment {{ bill.status|lower }}</div>
+          <div class="when">{{ bill.request_completed_datetime|date:"d M Y, H:i:s"|default:"Awaiting final status" }}</div>
+        </li>
+        <li>
+          <span class="dot {% if bill.credited %}on{% endif %}"></span>
+          <div class="title">Meter credited</div>
+          <div class="when">{{ bill.credited|yesno:"Yes,Not yet" }}</div>
+        </li>
+        <li>
+          <span class="dot {% if bill.webhook_notified %}on{% endif %}"></span>
+          <div class="title">eBilling notified</div>
+          <div class="when">{{ bill.webhook_notified|yesno:"Yes,Not yet" }}</div>
+        </li>
+      </ul>
+    </div>
+  </section>
+</div>
+{% endblock %}

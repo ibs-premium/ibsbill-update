@@ -1,0 +1,247 @@
+{% extends 'dashboard/base.html' %}
+{% load dashboard_extras %}
+{% block title %}Reports{% endblock %}
+{% block crumb %}Reports{% endblock %}
+{% block heading %}Reports{% endblock %}
+{% block actions %}
+  <button class="btn btn-ghost btn-sm no-print" type="button" onclick="window.print()"><i data-lucide="printer"></i> Print</button>
+  <a class="btn btn-ghost btn-sm no-print" href="?{% if querystring %}{{ querystring }}&{% endif %}export=csv"><i data-lucide="download"></i> Export CSV</a>
+{% endblock %}
+
+{% block content %}
+<form class="panel report-filters no-print" method="get" id="reportForm">
+  <div class="segmented" role="radiogroup" aria-label="Report period">
+    {% for value, name in periods %}
+      <label class="{% if period == value %}active{% endif %}">
+        <input type="radio" name="period" value="{{ value }}" {% if period == value %}checked{% endif %}>
+        {{ name }}
+      </label>
+    {% endfor %}
+  </div>
+  <div class="report-fields">
+    <div data-for="monthly quarterly half yearly">
+      <label class="form-label" for="year">Year</label>
+      <select class="form-select" name="year" id="year">
+        {% for y in years %}<option value="{{ y }}" {% if y == sel.year %}selected{% endif %}>{{ y }}</option>{% endfor %}
+      </select>
+    </div>
+    <div data-for="monthly">
+      <label class="form-label" for="month">Month</label>
+      <select class="form-select" name="month" id="month">
+        {% for n, name in months %}<option value="{{ n }}" {% if n == sel.month %}selected{% endif %}>{{ name }}</option>{% endfor %}
+      </select>
+    </div>
+    <div data-for="quarterly">
+      <label class="form-label" for="quarter">Quarter</label>
+      <select class="form-select" name="quarter" id="quarter">
+        <option value="1" {% if sel.quarter == 1 %}selected{% endif %}>Q1 (Jan – Mar)</option>
+        <option value="2" {% if sel.quarter == 2 %}selected{% endif %}>Q2 (Apr – Jun)</option>
+        <option value="3" {% if sel.quarter == 3 %}selected{% endif %}>Q3 (Jul – Sep)</option>
+        <option value="4" {% if sel.quarter == 4 %}selected{% endif %}>Q4 (Oct – Dec)</option>
+      </select>
+    </div>
+    <div data-for="half">
+      <label class="form-label" for="half">Half</label>
+      <select class="form-select" name="half" id="half">
+        <option value="1" {% if sel.half == 1 %}selected{% endif %}>H1 (Jan – Jun)</option>
+        <option value="2" {% if sel.half == 2 %}selected{% endif %}>H2 (Jul – Dec)</option>
+      </select>
+    </div>
+    <div data-for="custom">
+      <label class="form-label" for="from">From</label>
+      <input class="form-control" type="date" name="from" id="from" value="{{ start|date:'Y-m-d' }}">
+    </div>
+    <div data-for="custom">
+      <label class="form-label" for="to">To</label>
+      <input class="form-control" type="date" name="to" id="to" value="{{ end|date:'Y-m-d' }}">
+    </div>
+    <div>
+      <label class="form-label" for="app">Application</label>
+      <select class="form-select" name="app" id="app">
+        <option value="">All applications</option>
+        {% for a in apps %}<option value="{{ a }}" {% if app == a %}selected{% endif %}>{{ a }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="report-run">
+      <button class="btn btn-brand" type="submit"><i data-lucide="chart-column"></i> Run report</button>
+    </div>
+  </div>
+</form>
+
+<div class="report-title">
+  <div>
+    <h2>{{ label }}</h2>
+    <div class="muted">
+      {{ start|date:"d M Y" }} – {{ end|date:"d M Y" }} · {{ app|default:"All applications" }}
+      <span class="print-only"> · Generated {{ generated|date:"d M Y, H:i" }} by {{ user.get_username }}</span>
+    </div>
+  </div>
+  <div class="muted small">Compared with {{ prev_start|date:"d M Y" }} – {{ prev_end|date:"d M Y" }}</div>
+</div>
+
+<div class="stat-grid">
+  <div class="panel stat">
+    <div class="label">Collected <i data-lucide="banknote"></i></div>
+    <div class="value positive">{{ totals.collected|money }}</div>
+    <div class="sub">{% include 'dashboard/_delta.html' with delta=deltas.collected %} vs {{ prev_totals.collected|money }}</div>
+  </div>
+  <div class="panel stat">
+    <div class="label">Requests <i data-lucide="receipt"></i></div>
+    <div class="value">{{ totals.count }}</div>
+    <div class="sub">{% include 'dashboard/_delta.html' with delta=deltas.count %} vs {{ prev_totals.count }}</div>
+  </div>
+  <div class="panel stat">
+    <div class="label">Success rate <i data-lucide="circle-check"></i></div>
+    <div class="value">{% if totals.success_rate is not None %}{{ totals.success_rate }}%{% else %}—{% endif %}</div>
+    <div class="sub">{{ totals.successful }} successful · {{ totals.failed }} failed · {{ totals.pending }} pending</div>
+  </div>
+  <div class="panel stat">
+    <div class="label">Average payment <i data-lucide="calculator"></i></div>
+    <div class="value">{{ totals.average|money }}</div>
+    <div class="sub">Per successful payment</div>
+  </div>
+</div>
+
+<section class="panel mb-3 chart-panel">
+  <div class="panel-head">
+    <h2>{% if unit == 'day' %}Daily{% else %}Monthly{% endif %} trend</h2>
+    <span class="muted small">Requests &amp; amount collected</span>
+  </div>
+  <div class="panel-body" style="height: 300px;">
+    <canvas id="reportChart" aria-label="Report trend" role="img"></canvas>
+  </div>
+</section>
+
+<section class="panel mb-3">
+    <div class="panel-head">
+      <h2>Breakdown by {{ unit }}</h2>
+      <span class="muted small">{{ rows|length }} {{ unit }}{{ rows|length|pluralize }}</span>
+    </div>
+    <div class="table-wrap">
+      <table class="table-d">
+        <thead>
+          <tr>
+            <th>{{ unit|capfirst }}</th><th class="num">Requests</th><th class="num">Successful</th>
+            <th class="num">Failed</th><th class="num">Pending</th><th class="num">Rate</th><th class="num">Collected</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in rows %}
+            <tr class="{% if not r.count %}muted{% endif %}">
+              <td class="text-nowrap">
+                {% if r.count %}
+                  <a class="link-brand fw-normal" href="{% url 'dashboard:transactions' %}?from={{ r.date|date:'Y-m-d' }}&to={% if unit == 'day' %}{{ r.date|date:'Y-m-d' }}{% else %}{{ r.date|date:'Y-m-t' }}{% endif %}{% if app %}&app={{ app|urlencode }}{% endif %}">{{ r.label }}</a>
+                {% else %}{{ r.label }}{% endif %}
+              </td>
+              <td class="num">{{ r.count }}</td>
+              <td class="num">{{ r.successful }}</td>
+              <td class="num">{{ r.failed }}</td>
+              <td class="num">{{ r.pending }}</td>
+              <td class="num">{% if r.success_rate is not None %}{{ r.success_rate }}%{% else %}—{% endif %}</td>
+              <td class="num">{{ r.collected|money }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td>Total</td>
+            <td class="num">{{ totals.count }}</td>
+            <td class="num">{{ totals.successful }}</td>
+            <td class="num">{{ totals.failed }}</td>
+            <td class="num">{{ totals.pending }}</td>
+            <td class="num">{% if totals.success_rate is not None %}{{ totals.success_rate }}%{% else %}—{% endif %}</td>
+            <td class="num">{{ totals.collected|money }}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><h2>By application</h2></div>
+    <div class="table-wrap">
+      <table class="table-d">
+        <thead>
+          <tr>
+            <th>Application</th><th class="num">Requests</th><th class="num">Successful</th>
+            <th class="num">Failed</th><th class="num">Pending</th><th class="num">Rate</th><th class="num">Collected</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in by_app %}
+            <tr>
+              <td>{{ r.app|default:"—" }}</td>
+              <td class="num">{{ r.count }}</td>
+              <td class="num">{{ r.successful }}</td>
+              <td class="num">{{ r.failed }}</td>
+              <td class="num">{{ r.pending }}</td>
+              <td class="num">{% if r.success_rate is not None %}{{ r.success_rate }}%{% else %}—{% endif %}</td>
+              <td class="num">{{ r.collected|money }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="7"><div class="empty"><i data-lucide="inbox"></i>No transactions in this period.</div></td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+{{ chart|json_script:"chart-data" }}
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+  (function () {
+    // Show only the inputs that apply to the chosen period
+    const form = document.getElementById('reportForm');
+    function sync() {
+      const period = form.querySelector('input[name=period]:checked').value;
+      form.querySelectorAll('.segmented label').forEach(l => l.classList.toggle('active', l.querySelector('input').checked));
+      form.querySelectorAll('[data-for]').forEach(el => {
+        const on = el.dataset.for.split(' ').includes(period);
+        el.hidden = !on;
+        el.querySelectorAll('select, input').forEach(i => { i.disabled = !on; });
+      });
+    }
+    form.querySelectorAll('input[name=period]').forEach(r => r.addEventListener('change', sync));
+    sync();
+
+    const data = JSON.parse(document.getElementById('chart-data').textContent);
+    const css = getComputedStyle(document.documentElement);
+    const v = name => css.getPropertyValue(name).trim();
+    Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
+    const chart = new Chart(document.getElementById('reportChart'), {
+      data: {
+        labels: data.map(d => d.label),
+        datasets: [
+          {
+            type: 'bar', label: 'Requests', data: data.map(d => d.count),
+            backgroundColor: v('--brand-200'), hoverBackgroundColor: v('--brand-500'),
+            borderRadius: 4, maxBarThickness: 28, yAxisID: 'y',
+          },
+          {
+            type: 'line', label: 'Collected', data: data.map(d => d.amount),
+            borderColor: v('--brand-700'), backgroundColor: v('--brand-700'), tension: .3,
+            pointRadius: 2, borderWidth: 2, yAxisID: 'y1',
+          },
+        ],
+      },
+      options: {
+        maintainAspectRatio: false,
+        animation: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: { legend: { labels: { color: v('--neutral-600'), boxWidth: 12 } } },
+        scales: {
+          x: { ticks: { color: v('--neutral-500'), autoSkip: true, maxRotation: 0 }, grid: { display: false } },
+          y: { beginAtZero: true, ticks: { color: v('--neutral-500'), precision: 0 }, grid: { color: v('--neutral-200') } },
+          y1: { beginAtZero: true, position: 'right', ticks: { color: v('--neutral-500') }, grid: { display: false } },
+        },
+      },
+    });
+
+    // Redraw at page width when printing so the chart isn't clipped
+    window.addEventListener('beforeprint', () => chart.resize(680, 260));
+    window.addEventListener('afterprint', () => chart.resize());
+  })();
+</script>
+{% endblock %}

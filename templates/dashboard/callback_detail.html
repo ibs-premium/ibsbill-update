@@ -1,0 +1,30 @@
+{% extends 'dashboard/base.html' %}
+{% load dashboard_extras %}
+{% block title %}Callback{% endblock %}
+{% block crumbs %}<i data-lucide="chevron-right"></i><a href="{% url 'dashboard:callbacks' %}">Callback Logs</a>{% endblock %}
+{% block crumb %}#{{ log.pk }}{% endblock %}
+{% block heading %}Callback #{{ log.pk }}{% endblock %}
+
+{% block content %}
+<section class="panel mb-3">
+  <dl class="kv">
+    <dt>Received</dt><dd>{{ log.date|date:"d M Y, H:i:s" }}</dd>
+    <dt>Method</dt><dd>{{ log.method }}</dd>
+    <dt>URL</dt><dd class="mono">{{ log.url }}</dd>
+    <dt>IP address</dt><dd class="mono">{{ log.ip_address }}</dd>
+    <dt>User-Agent</dt><dd class="mono">{{ log.user_agent|default:"—" }}</dd>
+    <dt>Referrer</dt><dd class="mono">{{ log.referrer|default:"—" }}</dd>
+    <dt>Query parameters</dt><dd class="mono">{{ log.query_params|default:"—" }}</dd>
+  </dl>
+</section>
+
+<section class="panel mb-3">
+  <div class="panel-head"><h2>Body</h2></div>
+  <div class="panel-body"><pre class="code">{{ log.contents|pretty_json }}</pre></div>
+</section>
+
+<section class="panel">
+  <div class="panel-head"><h2>Headers</h2></div>
+  <div class="panel-body"><pre class="code">{{ log.headers }}</pre></div>
+</section>
+{% endblock %}

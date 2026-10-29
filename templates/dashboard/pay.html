@@ -1,0 +1,229 @@
+{% extends 'dashboard/base.html' %}
+{% block title %}MoMo Payment{% endblock %}
+{% block crumb %}MoMo Payment{% endblock %}
+{% block heading %}MoMo Payment{% endblock %}
+
+{% block content %}
+<div class="grid-2 even">
+  <section class="panel align-self-start">
+    <div class="panel-head">
+      <h2>Request a payment</h2>
+      <span class="muted small">The customer approves it on their phone</span>
+    </div>
+    <form class="panel-body" id="payForm" novalidate>
+      <div class="mb-3">
+        <label class="form-label" for="app">Application</label>
+        <select class="form-select" id="app" required>
+          {% for app in apps %}
+            <option value="{{ app.name }}" data-key="{{ app.key }}">{{ app.name }}</option>
+          {% empty %}
+            <option value="">No applications registered</option>
+          {% endfor %}
+        </select>
+        {% if not apps %}
+          <div class="form-text">Register an app on the <a class="link-brand" href="{% url 'dashboard:applications' %}">Applications</a> page first.</div>
+        {% endif %}
+      </div>
+      <div class="mb-3">
+        <label class="form-label" for="momo">MoMo number</label>
+        <input class="form-control" id="momo" inputmode="numeric" placeholder="024 123 4567" required>
+        <div class="form-text">MTN number, 10 digits (024…) or 12 digits (23324…).</div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label" for="amount">Amount</label>
+        <input class="form-control" id="amount" type="number" min="0.01" step="0.01" placeholder="0.00" required>
+      </div>
+      <div class="row g-3 mb-4">
+        <div class="col-sm-6">
+          <label class="form-label" for="device">Device ID</label>
+          <input class="form-control" id="device" placeholder="Meter serial number" required>
+        </div>
+        <div class="col-sm-6">
+          <label class="form-label" for="username">Username</label>
+          <input class="form-control" id="username" value="{{ user.get_username }}">
+        </div>
+      </div>
+      <div class="alert-d error d-none" id="formError" role="alert"></div>
+      <button class="btn btn-brand w-100" style="height: 40px;" type="submit" id="sendBtn" {% if not apps %}disabled{% endif %}>
+        <i data-lucide="send"></i> <span>Send payment request</span>
+      </button>
+    </form>
+  </section>
+
+  <section class="panel align-self-start">
+    <div class="panel-head"><h2>Status</h2></div>
+    <div id="statusArea">
+      <div class="momo-status">
+        <div class="ring"><i data-lucide="smartphone"></i></div>
+        <h3>No request yet</h3>
+        <p class="muted mb-0">Fill in the form to send a MoMo payment prompt.</p>
+      </div>
+    </div>
+    <div class="panel-body border-top d-none" id="steps">
+      <ul class="timeline">
+        <li><span class="dot" data-step="sent"></span><div class="title">Request sent to MTN</div><div class="when" data-when="sent">—</div></li>
+        <li><span class="dot" data-step="approve"></span><div class="title">Customer approval</div><div class="when" data-when="approve">—</div></li>
+        <li><span class="dot" data-step="final"></span><div class="title">Final status</div><div class="when" data-when="final">—</div></li>
+      </ul>
+    </div>
+  </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  const BILL_URL = "{% url 'bill' %}";
+  const STATUS_URL = "{% url 'bill_status' %}";
+  const TX_URL = "{% url 'dashboard:transactions' %}";
+  const POLL_MS = 10000;
+  const MAX_POLLS = 30; // stop after ~5 minutes
+
+  const form = document.getElementById('payForm');
+  const btn = document.getElementById('sendBtn');
+  const errorBox = document.getElementById('formError');
+  const area = document.getElementById('statusArea');
+  const steps = document.getElementById('steps');
+  let timer = null;
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+  }
+
+  // Mirrors ebilling.this.validate_momo_number
+  function validNumber(n) {
+    if (!/^\d+$/.test(n)) return false;
+    if (n.length === 10) return n.startsWith('0') && !/^(057|027|020|050)/.test(n);
+    if (n.length === 12) return n.startsWith('233') && n[3] !== '0' && !/^(23357|23327|23320|23350)/.test(n);
+    return false;
+  }
+
+  function show(kind, icon, title, text, ref) {
+    area.innerHTML = `
+      <div class="momo-status ${kind}">
+        <div class="ring"><i data-lucide="${icon}" class="${kind === 'pending' ? 'spin' : ''}"></i></div>
+        <h3>${esc(title)}</h3>
+        <p class="muted mb-2">${esc(text)}</p>
+        ${ref ? `<div class="mono muted small">${esc(ref)}</div>
+                 <a class="link-brand small d-inline-block mt-2" href="${TX_URL}?q=${encodeURIComponent(ref)}">View transaction</a>` : ''}
+      </div>`;
+    lucide.createIcons();
+  }
+
+  function step(name, state, text) {
+    const dot = steps.querySelector(`[data-step="${name}"]`);
+    dot.className = 'dot' + (state ? ' ' + state : '');
+    steps.querySelector(`[data-when="${name}"]`).textContent = text;
+  }
+
+  function now() { return new Date().toLocaleTimeString(); }
+
+  function busy(on) {
+    btn.disabled = on;
+    btn.querySelector('span').textContent = on ? 'Sending…' : 'Send payment request';
+  }
+
+  function finish(status, ref) {
+    clearInterval(timer);
+    timer = null;
+    busy(false);
+    if (status === 'SUCCESSFUL') {
+      step('approve', 'on', 'Approved ' + now());
+      step('final', 'on', 'Successful ' + now());
+      show('success', 'circle-check', 'Payment successful', 'The customer approved the payment.', ref);
+    } else if (status === 'FAILED') {
+      step('approve', 'bad', 'Declined or failed ' + now());
+      step('final', 'bad', 'Failed ' + now());
+      show('failed', 'circle-x', 'Payment failed', 'The customer declined, or MTN rejected the payment.', ref);
+    } else {
+      step('final', '', 'Stopped checking at ' + now());
+      show('', 'clock', 'Still pending', 'No final status after 5 minutes. Check the transaction later.', ref);
+    }
+  }
+
+  function poll(ref, token) {
+    let count = 0;
+    const check = async () => {
+      count += 1;
+      try {
+        const res = await fetch(STATUS_URL, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({reference_id: ref, token: token}),
+        });
+        const data = await res.json();
+        let status = data.status;
+        if (!status && data.raw_response_text) {
+          try { status = JSON.parse(data.raw_response_text).status; } catch (e) {}
+        }
+        if (status === 'SUCCESSFUL' || status === 'FAILED') return finish(status, ref);
+      } catch (e) { /* network blip — try again next tick */ }
+      if (count >= MAX_POLLS) finish('TIMEOUT', ref);
+    };
+    check();
+    timer = setInterval(check, POLL_MS);
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (timer) { clearInterval(timer); timer = null; }
+    errorBox.classList.add('d-none');
+
+    const appSel = document.getElementById('app');
+    const momo = document.getElementById('momo').value.replace(/\s+/g, '');
+    const amount = parseFloat(document.getElementById('amount').value);
+    const device = document.getElementById('device').value.trim();
+
+    let error = '';
+    if (!appSel.value) error = 'Choose an application.';
+    else if (!validNumber(momo)) error = 'Enter a valid MTN MoMo number.';
+    else if (!(amount > 0)) error = 'Enter an amount greater than zero.';
+    else if (!device) error = 'Enter the device ID.';
+    if (error) {
+      errorBox.textContent = error;
+      errorBox.classList.remove('d-none');
+      return;
+    }
+
+    busy(true);
+    steps.classList.remove('d-none');
+    ['sent', 'approve', 'final'].forEach(s => step(s, '', '—'));
+    show('pending', 'loader-circle', 'Sending request…', 'Contacting MTN MoMo.');
+
+    try {
+      const res = await fetch(BILL_URL, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          app: appSel.value,
+          app_key: appSel.selectedOptions[0].dataset.key,
+          amount: amount,
+          momo_number: momo,
+          device_id: device,
+          username: document.getElementById('username').value.trim(),
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      const req = data.momo_request || {};
+      if (!res.ok || !data.ok || !req.request_reference_id) {
+        busy(false);
+        step('sent', 'bad', 'Rejected ' + now());
+        show('failed', 'circle-x', 'Request not sent', req.message || data.message || data.error || 'MTN did not accept the request.');
+        return;
+      }
+      step('sent', 'on', 'Accepted ' + now());
+      const payer = data.payer || {};
+      const who = payer.momo_name ? `${payer.momo_name} (${payer.momo_number})` : (payer.momo_number || momo);
+      step('approve', 'wait', 'Waiting for ' + who + '…');
+      show('pending', 'loader-circle', 'Waiting for approval',
+           'A prompt was sent to ' + who + '. Checking every 10 seconds.', req.request_reference_id);
+      poll(req.request_reference_id, req.token);
+    } catch (err) {
+      busy(false);
+      step('sent', 'bad', 'Error ' + now());
+      show('failed', 'wifi-off', 'Could not reach the server', 'Check your connection and try again.');
+    }
+  });
+})();
+</script>
+{% endblock %}

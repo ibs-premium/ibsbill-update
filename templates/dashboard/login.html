@@ -1,0 +1,60 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% block title %}Login{% endblock %}
+{% block body %}
+<div class="login">
+  <aside class="login-brand">
+    <div class="ibs">
+      <img src="{% static 'dashboard/img/ibs_logo_white_cropped.png' %}" alt="IBS">
+      <span>Intelligent Building Solutions</span>
+    </div>
+    <div class="hero">
+      <img src="{% static 'dashboard/img/ebilling-logo-animation-white.svg' %}" alt="eBilling" draggable="false">
+    </div>
+    <p>All rights reserved. www.ibsgh.com</p>
+  </aside>
+
+  <main class="login-form">
+    <div class="inner">
+      <div class="mobile-logo">
+        <img src="{% static 'dashboard/img/ebilling-logo-animation.svg' %}" alt="eBilling" draggable="false">
+      </div>
+      <h1>Welcome to <span>eBilling</span> MoMo</h1>
+      <p class="lead-sm">Login to your account to continue</p>
+      <div class="login-rule" aria-hidden="true"><span></span></div>
+
+      {% if form.errors %}
+        <div class="alert-d error" role="alert">Your username and password didn't match, or the account isn't staff.</div>
+      {% endif %}
+
+      <form method="post" novalidate>
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}">
+        <div class="mb-3">
+          <label class="form-label" for="id_username">Username</label>
+          <input class="form-control" type="text" name="username" id="id_username" placeholder="username"
+                 autocomplete="username" value="{{ form.username.value|default:'' }}" autofocus required>
+        </div>
+        <div class="mb-4">
+          <label class="form-label" for="id_password">Password</label>
+          <div class="pw-wrap">
+            <input class="form-control" type="password" name="password" id="id_password"
+                   placeholder="Enter your password" autocomplete="current-password" required>
+            <button type="button" aria-label="Show password" onclick="
+              const i = document.getElementById('id_password');
+              const show = i.type === 'password';
+              i.type = show ? 'text' : 'password';
+              this.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+              this.innerHTML = '<i data-lucide=&quot;' + (show ? 'eye' : 'eye-off') + '&quot;></i>';
+              lucide.createIcons();">
+              <i data-lucide="eye-off"></i>
+            </button>
+          </div>
+        </div>
+        <button class="btn btn-brand w-100" style="height: 40px;" type="submit">Login</button>
+      </form>
+      <p class="mobile-foot">All rights reserved. www.ibsgh.com</p>
+    </div>
+  </main>
+</div>
+{% endblock %}

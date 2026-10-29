@@ -1,0 +1,1 @@
+{% if b.momo_name or b.momo_number %}<div class="payer"><span class="payer-name">{{ b.momo_name|default:"Name unavailable" }}</span><span class="payer-num mono">{{ b.momo_number|default:"" }}</span></div>{% else %}<span class="muted">—</span>{% endif %}

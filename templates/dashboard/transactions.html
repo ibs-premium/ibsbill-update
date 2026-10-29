@@ -1,0 +1,165 @@
+{% extends 'dashboard/base.html' %}
+{% load dashboard_extras %}
+{% block title %}Transactions{% endblock %}
+{% block crumb %}Transactions{% endblock %}
+{% block heading %}Transactions{% endblock %}
+{% block actions %}
+  <a class="btn btn-ghost btn-sm" href="?{% if querystring %}{{ querystring }}&{% endif %}export=csv"><i data-lucide="download"></i> Export CSV</a>
+{% endblock %}
+
+{% block content %}
+<section class="panel">
+  <form class="filters" method="get">
+    <input class="form-control search" type="search" name="q" value="{{ filters.q }}"
+           placeholder="Search reference, payer name or number, username, device…">
+    <select class="form-select" name="status" onchange="this.form.submit()">
+      <option value="">All statuses</option>
+      {% for s in statuses %}
+        <option value="{{ s }}" {% if filters.status == s %}selected{% endif %}>{{ s|lower|capfirst }}</option>
+      {% endfor %}
+    </select>
+    <select class="form-select" name="app" onchange="this.form.submit()">
+      <option value="">All apps</option>
+      {% for a in apps %}
+        <option value="{{ a }}" {% if filters.app == a %}selected{% endif %}>{{ a }}</option>
+      {% endfor %}
+    </select>
+    <input class="form-control" type="date" name="from" value="{{ filters.from }}" aria-label="From date">
+    <input class="form-control" type="date" name="to" value="{{ filters.to }}" aria-label="To date">
+    <button class="btn btn-brand" type="submit"><i data-lucide="filter"></i> Filter</button>
+    {% if querystring %}<a class="btn btn-ghost" href="{% url 'dashboard:transactions' %}">Clear</a>{% endif %}
+  </form>
+
+  {% if unfinished_count %}
+    <div class="bulk-check" id="bulkCheck">
+      <div class="bulk-row">
+        <span class="bulk-text">
+          <i data-lucide="hourglass"></i>
+          <span><strong>{{ unfinished_count }}</strong> transaction{{ unfinished_count|pluralize }} in this list {{ unfinished_count|pluralize:"is,are" }} not finished.</span>
+        </span>
+        <label class="bulk-opt">
+          <input type="checkbox" id="failNotFound"> Mark ones MTN has no record of as failed
+        </label>
+        <button class="btn btn-brand btn-sm" type="button" id="bulkStart">
+          <i data-lucide="refresh-cw"></i> Check {{ unfinished_count }} with MTN
+        </button>
+      </div>
+      <div class="bulk-progress" id="bulkProgress" hidden>
+        <div class="bar"><span id="bulkBar" style="width: 0%"></span></div>
+        <div class="bulk-row">
+          <span class="muted" id="bulkStatus" role="status">Starting…</span>
+          <button class="btn btn-ghost btn-sm" type="button" id="bulkStop">Stop</button>
+        </div>
+        <div class="bulk-counts">
+          <span class="badge-s success"><span data-count="successful">0</span>&nbsp;successful</span>
+          <span class="badge-s failed"><span data-count="failed">0</span>&nbsp;failed</span>
+          <span class="badge-s pending"><span data-count="pending">0</span>&nbsp;still pending</span>
+          <span class="badge-s unknown"><span data-count="not_found">0</span>&nbsp;not found at MTN</span>
+          <span class="badge-s unknown"><span data-count="error">0</span>&nbsp;errors</span>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="table-wrap">
+    <table class="table-d">
+      <thead>
+        <tr>
+          <th>Date</th><th>Reference</th><th>Payer</th><th>App</th><th>Username</th><th>Device</th>
+          <th class="num">Amount</th><th>Status</th><th title="Meter credited">Credited</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for b in page %}
+          <tr class="clickable" onclick="location.href='{% url 'dashboard:transaction_detail' b.pk %}'">
+            <td class="muted text-nowrap">{{ b.request_datetime|date:"d M Y, H:i" }}</td>
+            <td class="mono truncate" title="{{ b.uuid }}">{{ b.uuid|truncatechars:13 }}</td>
+            <td>{% include 'dashboard/_payer.html' %}</td>
+            <td class="text-nowrap">{{ b.app }}</td>
+            <td class="text-nowrap">{{ b.username|default:"—" }}</td>
+            <td class="mono">{{ b.device_id }}</td>
+            <td class="num">{{ b.amount|money }}</td>
+            <td>{% include 'dashboard/_status.html' with status=b.status %}</td>
+            <td>{% if b.credited %}<i data-lucide="circle-check" class="flag on"></i>{% else %}<i data-lucide="circle-minus" class="flag"></i>{% endif %}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="9"><div class="empty"><i data-lucide="search-x"></i>No transactions match these filters.</div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if page.paginator.count %}
+    <div class="pager">Total of matching requests: <strong class="text-body">{{ total_amount|money }}</strong></div>
+  {% endif %}
+  {% include 'dashboard/_pager.html' %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+{% if unfinished_count %}
+<script>
+(function () {
+  const URL = "{% url 'dashboard:transactions_check' %}";
+  const FILTERS = "{{ querystring|escapejs }}";
+  const CSRF = "{{ csrf_token }}";
+  const TOTAL = {{ unfinished_count }};
+
+  const startBtn = document.getElementById('bulkStart');
+  const stopBtn = document.getElementById('bulkStop');
+  const progress = document.getElementById('bulkProgress');
+  const bar = document.getElementById('bulkBar');
+  const statusEl = document.getElementById('bulkStatus');
+  const failNotFound = document.getElementById('failNotFound');
+  let stopped = false;
+
+  function addCounts(counts) {
+    for (const [key, n] of Object.entries(counts)) {
+      const el = document.querySelector(`[data-count="${key}"]`);
+      if (el) el.textContent = Number(el.textContent) + n;
+    }
+  }
+
+  function finish(message) {
+    statusEl.textContent = message;
+    stopBtn.textContent = 'Reload list';
+    stopBtn.onclick = () => location.reload();
+  }
+
+  startBtn.addEventListener('click', async () => {
+    const extra = failNotFound.checked ? ' References MTN has no record of will be marked FAILED.' : '';
+    if (!confirm(`Check ${TOTAL} unfinished transaction(s) with MTN?${extra}`)) return;
+
+    startBtn.disabled = true;
+    failNotFound.disabled = true;
+    progress.hidden = false;
+    stopBtn.onclick = () => { stopped = true; stopBtn.disabled = true; statusEl.textContent = 'Stopping after this batch…'; };
+
+    let after = 0, checked = 0;
+    while (!stopped) {
+      let data;
+      try {
+        const res = await fetch(URL, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': CSRF},
+          body: (FILTERS ? FILTERS + '&' : '') + `after=${after}&fail_not_found=${failNotFound.checked ? 1 : 0}`,
+        });
+        data = await res.json();
+        if (!res.ok) throw new Error(data.error || `Server error ${res.status}`);
+      } catch (err) {
+        stopBtn.disabled = false;
+        return finish(`Stopped: ${err.message} (${checked} of ${TOTAL} checked)`);
+      }
+      checked += data.checked;
+      after = data.after;
+      addCounts(data.counts);
+      bar.style.width = Math.min(100, Math.round(100 * checked / TOTAL)) + '%';
+      statusEl.textContent = `Checked ${checked} of ${TOTAL}…`;
+      if (data.done) return finish(`Finished: checked ${checked} transaction(s).`);
+    }
+    stopBtn.disabled = false;
+    finish(`Stopped by you after ${checked} of ${TOTAL}.`);
+  });
+})();
+</script>
+{% endif %}
+{% endblock %}

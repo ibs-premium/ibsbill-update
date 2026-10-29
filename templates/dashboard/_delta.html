@@ -1,0 +1,1 @@
+{% if delta is None %}<span class="delta" title="No data in the previous period">—</span>{% elif delta > 0 %}<span class="delta up">▲ {{ delta }}%</span>{% elif delta < 0 %}<span class="delta down">▼ {{ delta|stringformat:"s"|cut:"-" }}%</span>{% else %}<span class="delta">0%</span>{% endif %}

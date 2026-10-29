@@ -1,0 +1,13 @@
+{% if page.paginator.count %}
+<div class="pager">
+  <span>Showing {{ page.start_index }}–{{ page.end_index }} of {{ page.paginator.count }}</span>
+  <span class="d-flex gap-2">
+    {% if page.has_previous %}
+      <a class="btn btn-ghost btn-sm" href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page.previous_page_number }}"><i data-lucide="chevron-left"></i> Prev</a>
+    {% endif %}
+    {% if page.has_next %}
+      <a class="btn btn-ghost btn-sm" href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page.next_page_number }}">Next <i data-lucide="chevron-right"></i></a>
+    {% endif %}
+  </span>
+</div>
+{% endif %}

@@ -172,6 +172,29 @@ def request_to_pay(token, amount, payer_number, ref_id, external_id="invoice_123
 
     return response_data
     
+def get_account_holder_name(token, msisdn):
+    """Registered MoMo name for a number (e.g. 233241234567), or '' if MTN won't say.
+
+    Uses MTN's basic user info lookup. Failures return '' so a missing name never
+    blocks a payment.
+    """
+    url = f"https://proxy.momoapi.mtn.com/collection/v1_0/accountholder/msisdn/{msisdn}/basicuserinfo"
+    headers = {
+        'Authorization': f'Bearer {token}',
+        'X-Target-Environment': ENVIRONMENT,
+        'Ocp-Apim-Subscription-Key': SUBSCRIPTION_KEY
+    }
+    try:
+        response = requests.get(url, headers=headers, timeout=10)
+        if response.status_code != 200:
+            return ''
+        data = response.json()
+    except (requests.exceptions.RequestException, ValueError):
+        return ''
+    name = data.get('name') or ' '.join(filter(None, [data.get('given_name'), data.get('family_name')]))
+    return name.strip()
+
+
 def validate_momo_number(momo_number: str) -> str | None:
     momo_number = momo_number.strip()
     if not momo_number.isdigit() or len(momo_number) not in [10, 12]:

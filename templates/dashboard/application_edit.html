@@ -1,0 +1,25 @@
+{% extends 'dashboard/base.html' %}
+{% block title %}Edit {{ app.name }}{% endblock %}
+{% block crumbs %}<i data-lucide="chevron-right"></i><a href="{% url 'dashboard:applications' %}">Applications</a>{% endblock %}
+{% block crumb %}{{ app.name }}{% endblock %}
+{% block heading %}Edit {{ app.name }}{% endblock %}
+
+{% block content %}
+<section class="panel" style="max-width: 560px;">
+  <div class="panel-head"><h2>Edit application</h2></div>
+  <form class="panel-body" method="post">
+    {% include 'dashboard/_app_form.html' %}
+    <div class="d-flex gap-2">
+      <button class="btn btn-brand" type="submit">Save changes</button>
+      <a class="btn btn-ghost" href="{% url 'dashboard:applications' %}">Cancel</a>
+    </div>
+  </form>
+  <form class="panel-body border-top d-flex justify-content-between align-items-center gap-3" method="post"
+        action="{% url 'dashboard:application_delete' app.pk %}"
+        onsubmit="return confirm('Remove {{ app.name|escapejs }}? It will no longer be able to request payments.');">
+    {% csrf_token %}
+    <span class="muted small">Removing an app stops it from initiating new payments. Existing transactions are kept.</span>
+    <button class="btn btn-danger-soft btn-sm text-nowrap" type="submit">Remove app</button>
+  </form>
+</section>
+{% endblock %}
